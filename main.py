@@ -2,14 +2,14 @@ states = list()
 alphabet = list()
 initial = ""
 finalStates = list()
-transitions = list()
 transitions_dic = dict()
+minimized = False
 
 def SelectFile():
     """
     docstring
     """
-    filename = input("Please enter the name of the file you want to work with (include '.txt') :")
+    filename = input("Please enter the name of the file you want to work with (include '.txt') : ")
     ReadFile(filename)
 
 def ReadFile(filename):
@@ -39,7 +39,31 @@ def ReadFile(filename):
         else:
             transitions_dic[temptransition[0]] = list()
             transitions_dic[temptransition[0]].append(temptransition)
+    PrintDFA()
     Menu()
+
+def PrintDFA():
+    """
+    docstring
+    """
+    print()
+    print("States: ", end="")
+    for state in states:
+        print(state, end=" ")
+    print()
+    print("Alphabet: ", end="")
+    for caracter in alphabet:
+        print(caracter, end=" ")
+    print()
+    print("Initial state: ", end="")
+    print(initial)
+    print("Final States: ", end="")
+    for state in finalStates:
+        print(state, end=" ")
+    print()
+    for key in transitions_dic:
+        for array in transitions_dic[key]:
+            print("Transition: " + array[0] + "," + array[1] + "=>" + array[2])
 
 def Menu():
     """
@@ -60,10 +84,12 @@ def Menu():
             test_input = str(input("Please enter the string to validate in the DFA: "))
             TestInput(test_input)
         if decision == 2:
-            pass
+            if minimized:
+                print("The DFA is already minimized")
+            else:
+                MinimizeDFA()
         if decision == 3:
             print("Come back soon!")
-
 
 def TestInput(test_input):
     """
@@ -76,8 +102,6 @@ def TestInput(test_input):
             print("String is not accepted")
     else:
         print("Not valid input")
-
-    pass
 
 def ValidateInput(test_input):
     """
@@ -116,6 +140,69 @@ def MakeTransitions(test_input, actual_state):
             print(actual_state + "," + temp + "=>Sink State")
             return False
         print(actual_state + " is a Sink State")
+        return False
+
+def MinimizeDFA():
+    """
+    docstring
+    """
+    global states
+    global finalStates
+    global transitions_dic
+    global minimized
+
+    var = CheckPairOfEntries() 
+    stateToDelete = ""
+    if  var == None:
+        minimized = True
+        PrintDFA()
+    else:
+        if var[1] != initial:
+            stateToDelete = var[1]
+            stateToSave = var[0]
+        else:
+            stateToDelete = var[0]
+            stateToSave = var[1]
+        states.remove(stateToDelete)
+        if stateToDelete in finalStates:
+            finalStates.remove(stateToDelete)
+        del transitions_dic[stateToDelete]
+        for key in transitions_dic:
+            for array in transitions_dic[key]:
+                for x in range(0, len(array)):
+                    if array[x] == stateToDelete:
+                        array[x] = stateToSave 
+        MinimizeDFA()
+
+def CheckPairOfEntries():
+    """
+    docstring
+    """
+    for x in range(0, len(states)-1):
+        for y in range(x+1, len(states)):
+            temp1 = transitions_dic[states[x]]
+            temp2 = transitions_dic[states[y]]
+            if Equivalence(temp1, temp2):
+                var = [temp1[0][0], temp2[0][0]]
+                return var
+    
+    return None
+                        
+def Equivalence(temp1, temp2):
+    """
+    docstring
+    """
+    if len(temp1) == len(temp2):
+        for z in range(0, len(temp1)):
+            if temp1[z][1] != temp2[z][1] or temp1[z][2] != temp2[z][2]:
+                return False
+        counter = 0
+        for state in finalStates:
+            if temp1[0][0] == state or temp2[0][0] == state:
+                counter += 1
+        if counter == 2 or counter == 0:
+            return True
+    else:
         return False
                         
 SelectFile()
